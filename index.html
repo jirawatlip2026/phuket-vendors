@@ -86,10 +86,42 @@ td.nt{max-width:420px;color:var(--mute);font-size:13.5px}
 .mact{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 .mb{font:inherit;font-size:13.5px;padding:7px 13px;border-radius:8px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer}
 .mb.pri{background:#0f4a52;color:#fff;border-color:#0f4a52}
+td.ph a{white-space:nowrap}
+td.ph{white-space:nowrap}
+.ib{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;padding:0;border-radius:9px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer;vertical-align:middle}
+.ib:hover{background:rgba(15,74,82,.07)}
+.ib svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.ib.pri{background:#0f4a52;color:#fff;border-color:#0f4a52}
+.ib.dl{color:#b3261e}
+.ib.cp{width:28px;height:28px;margin-left:4px}
+.ib.cp svg{width:14px;height:14px}
+.ib.ok{color:#1a7f4b;border-color:#1a7f4b}
 .mb.cp{padding:2px 7px;font-size:11.5px;margin-left:4px}
 .memo{margin-top:6px;color:#8a6d2f;font-size:13px}
 .mb.dl{color:#b3261e}
 .bar{flex-wrap:wrap}
+@media(max-width:700px){
+.stats{grid-template-columns:repeat(3,1fr);margin:-26px 12px 20px}
+.stats div{padding:12px 12px}.stats b{font-size:22px}.stats span{font-size:11.5px}
+.tw{background:transparent;border:0;box-shadow:none;overflow:visible}
+.tw table,.tw tbody{display:block;width:100%;min-width:0!important}
+.tw thead{display:none}
+.tw tr{display:block;box-sizing:border-box;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.tw td{display:block;border:0!important;padding:3px 0!important;text-align:left!important;max-width:none!important;width:auto!important}
+.tw td.nm{font-size:16.5px;padding-bottom:2px!important}
+.tw td.ct{color:var(--mute)}
+.tw td.ph{font-size:17px;padding:6px 0!important}
+.tw td.ph a{font-weight:600}
+.tw td.rt.nr{display:none!important}
+.tw td.rt{color:var(--accent);font-weight:600}
+.tw td.rt:before{content:attr(data-l) ' ';color:var(--mute);font-weight:400;font-size:12.5px}
+.tw td.nt{padding-top:6px!important}
+.tw td.ac{display:flex!important;gap:8px;margin-top:10px;padding-top:10px!important;border-top:1px solid var(--line)!important}
+.tw td.ac .ib{flex:1;height:42px}
+.tw td.ph .mb.cp{padding:4px 10px;font-size:12.5px}
+.bar{flex-direction:column;align-items:stretch}
+.bar>*{width:100%;box-sizing:border-box;flex:none!important}
+}
 @media print{.noprint{display:none!important}.bar{display:none}header{border-radius:0}.tw{box-shadow:none}}
 </style></head><body><div class="wrap">
 <header><div><h1>After Service ภูเก็ต</h1><div class="sub">รายชื่อช่างและแม่บ้านทั่วเกาะ ข้อมูล ณ 28 ต.ค. 2569</div></div></header>
@@ -142,6 +174,11 @@ async function loadRemote(){
 function rebuild(){D=OV.add.concat(BASE.filter(v=>!OV.del.includes(v.id)).map(v=>OV.edit[v.id]||v))}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(OV));localStorage.removeItem(OLD)}catch(e){}rebuild()}
 rebuild();
+const IC={
+ send:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>',
+ edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>',
+ del:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
+ copy:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>'};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const thb=n=>new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB',maximumFractionDigits:0}).format(n);
@@ -162,7 +199,7 @@ function render(){
   if(!r.length){$('#list').innerHTML='<div class="tw empty">ไม่พบรายชื่อที่ตรงกับการค้นหา</div>';return}
   $('#list').innerHTML='<div class="tw"><table><thead><tr><th>ชื่อ</th><th>ประเภทงาน / พื้นที่</th><th>เบอร์โทร</th><th class="r">เริ่มต้น</th><th>หมายเหตุ</th><th class="noprint"></th></tr></thead><tbody>'+r.map(([v,i])=>{
     const t=String(v.phone||'').replace(/[^\d+]/g,'');
-    return '<tr><td><b>'+esc(v.name)+'</b></td><td>'+esc(v.cat)+'<div class="sub">'+esc(v.area)+'</div></td><td>'+(v.phone?'<a href="tel:'+esc(t)+'">'+esc(v.phone)+'</a> <button class="mb cp" data-c="'+i+'" title="คัดลอกเบอร์">คัดลอก</button>':'<span class="sub">-</span>')+'</td><td class="r">'+(v.rate?thb(v.rate):'<span class="sub">-</span>')+'</td><td class="nt">'+esc(v.note)+(v.memo?'<div class="memo">📝 '+esc(v.memo)+'</div>':'')+'</td><td class="noprint" style="white-space:nowrap"><button class="mb pri" data-j="'+i+'">ส่งงาน</button> <button class="mb" data-e="'+i+'">แก้ไข</button> <button class="mb dl" data-d="'+i+'">ลบ</button></td></tr>'}).join('')+'</tbody></table></div>';
+    return '<tr><td class="nm"><b>'+esc(v.name)+'</b></td><td class="ct">'+esc(v.cat)+'<div class="sub">'+esc(v.area)+'</div></td><td class="ph">'+(v.phone?'<a href="tel:'+esc(t)+'">'+esc(v.phone)+'</a> <button class="ib cp" data-c="'+i+'" title="คัดลอกเบอร์" aria-label="คัดลอกเบอร์">'+IC.copy+'</button>':'<span class="sub">-</span>')+'</td><td class="r rt'+(v.rate?'':' nr')+'" data-l="เริ่มต้น">'+(v.rate?thb(v.rate):'<span class="sub">-</span>')+'</td><td class="nt">'+esc(v.note)+(v.memo?'<div class="memo">📝 '+esc(v.memo)+'</div>':'')+'</td><td class="noprint ac" style="white-space:nowrap"><button class="ib pri" data-j="'+i+'" title="ส่งงาน" aria-label="ส่งงาน">'+IC.send+'</button> <button class="ib" data-e="'+i+'" title="แก้ไข" aria-label="แก้ไข">'+IC.edit+'</button> <button class="ib dl" data-d="'+i+'" title="ลบ" aria-label="ลบ">'+IC.del+'</button></td></tr>'}).join('')+'</tbody></table></div>';
 }
 $('#list').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.e!==undefined)openForm(+b.dataset.e);
@@ -188,7 +225,7 @@ function openForm(i){
     if(i==null)n.id='u-'+Date.now().toString(36);$('#f_save').disabled=true;commit(i==null?'add':'edit',n,v).then(ok=>{$('#f_save').disabled=false;if(ok)$('#modal').classList.remove('on')})};
 }
 function copyTxt(t,btn){
-  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='คัดลอกแล้ว';setTimeout(()=>btn.textContent=o,1200)}};
+  const done=()=>{if(btn){if(btn.classList.contains('ib')){btn.classList.add('ok');setTimeout(()=>btn.classList.remove('ok'),1200)}else{const o=btn.textContent;btn.textContent='คัดลอกแล้ว';setTimeout(()=>btn.textContent=o,1200)}}};
   if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,()=>fb());else fb();
   function fb(){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();done()}
 }
