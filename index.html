@@ -86,6 +86,8 @@ td.nt{max-width:420px;color:var(--mute);font-size:13.5px}
 .mact{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 .mb{font:inherit;font-size:13.5px;padding:7px 13px;border-radius:8px;border:1px solid var(--line,#ccc);background:transparent;color:inherit;cursor:pointer}
 .mb.pri{background:#0f4a52;color:#fff;border-color:#0f4a52}
+.mb.cp{padding:2px 7px;font-size:11.5px;margin-left:4px}
+.memo{margin-top:6px;color:#8a6d2f;font-size:13px}
 .mb.dl{color:#b3261e}
 .bar{flex-wrap:wrap}
 @media print{.noprint{display:none!important}.bar{display:none}header{border-radius:0}.tw{box-shadow:none}}
@@ -124,13 +126,15 @@ function render(){
   if(!r.length){$('#list').innerHTML='<div class="tw empty">ไม่พบรายชื่อที่ตรงกับการค้นหา</div>';return}
   $('#list').innerHTML='<div class="tw"><table><thead><tr><th>ชื่อ</th><th>ประเภทงาน / พื้นที่</th><th>เบอร์โทร</th><th class="r">เริ่มต้น</th><th>หมายเหตุ</th><th class="noprint"></th></tr></thead><tbody>'+r.map(([v,i])=>{
     const t=String(v.phone||'').replace(/[^\d+]/g,'');
-    return '<tr><td><b>'+esc(v.name)+'</b></td><td>'+esc(v.cat)+'<div class="sub">'+esc(v.area)+'</div></td><td>'+(v.phone?'<a href="tel:'+esc(t)+'">'+esc(v.phone)+'</a>':'<span class="sub">-</span>')+'</td><td class="r">'+(v.rate?thb(v.rate):'<span class="sub">-</span>')+'</td><td class="nt">'+esc(v.note)+'</td><td class="noprint" style="white-space:nowrap"><button class="mb" data-e="'+i+'">แก้ไข</button> <button class="mb dl" data-d="'+i+'">ลบ</button></td></tr>'}).join('')+'</tbody></table></div>';
+    return '<tr><td><b>'+esc(v.name)+'</b></td><td>'+esc(v.cat)+'<div class="sub">'+esc(v.area)+'</div></td><td>'+(v.phone?'<a href="tel:'+esc(t)+'">'+esc(v.phone)+'</a> <button class="mb cp" data-c="'+i+'" title="คัดลอกเบอร์">คัดลอก</button>':'<span class="sub">-</span>')+'</td><td class="r">'+(v.rate?thb(v.rate):'<span class="sub">-</span>')+'</td><td class="nt">'+esc(v.note)+(v.memo?'<div class="memo">📝 '+esc(v.memo)+'</div>':'')+'</td><td class="noprint" style="white-space:nowrap"><button class="mb pri" data-j="'+i+'">ส่งงาน</button> <button class="mb" data-e="'+i+'">แก้ไข</button> <button class="mb dl" data-d="'+i+'">ลบ</button></td></tr>'}).join('')+'</tbody></table></div>';
 }
 $('#list').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
   if(b.dataset.e!==undefined)openForm(+b.dataset.e);
+  if(b.dataset.j!==undefined)openJob(+b.dataset.j);
+  if(b.dataset.c!==undefined){const p=D[+b.dataset.c].phone;copyTxt(p,b)}
   if(b.dataset.d!==undefined){const v=D[+b.dataset.d];if(confirm('ลบ "'+v.name+'" ออกจากรายชื่อ?')){D.splice(+b.dataset.d,1);save();render()}}});
 function openForm(i){
-  const v=i==null?{name:'',cat:CATS[0],area:AREAS[0],phone:'',rate:'',note:''}:D[i];
+  const v=i==null?{name:'',cat:CATS[0],area:AREAS[0],phone:'',rate:'',note:'',memo:''}:D[i];
   const opts=(arr,cur)=>(arr.includes(cur)||!cur?arr:[cur].concat(arr)).map(x=>'<option'+(x===cur?' selected':'')+'>'+esc(x)+'</option>').join('');
   $('#mbox').innerHTML='<h3>'+(i==null?'เพิ่มรายชื่อ':'แก้ไขรายชื่อ')+'</h3>'
    +'<label>ชื่อ<input id="f_name" value="'+esc(v.name)+'"></label>'
@@ -139,17 +143,39 @@ function openForm(i){
    +'<label>เบอร์โทร<input id="f_phone" inputmode="tel" value="'+esc(v.phone)+'"></label>'
    +'<label>ราคาเริ่มต้น (บาท)<input id="f_rate" inputmode="numeric" value="'+esc(v.rate)+'"></label>'
    +'<label>หมายเหตุ<textarea id="f_note" rows="3">'+esc(v.note)+'</textarea></label>'
+   +'<label>บันทึกภายใน (เช่น เคยใช้แล้วเป็นอย่างไร ราคาที่จ่ายจริง)<textarea id="f_memo" rows="2">'+esc(v.memo)+'</textarea></label>'
    +'<div class="mact"><button class="mb" id="f_cancel">ยกเลิก</button><button class="mb pri" id="f_save">บันทึก</button></div>';
   $('#modal').classList.add('on');$('#f_name').focus();
   $('#f_cancel').onclick=()=>$('#modal').classList.remove('on');
   $('#f_save').onclick=()=>{const name=$('#f_name').value.trim();if(!name){alert('กรุณากรอกชื่อ');return}
-    const n={...v,name,cat:$('#f_cat').value,area:$('#f_area').value,phone:$('#f_phone').value.trim(),rate:+String($('#f_rate').value).replace(/[^\d.]/g,'')||0,note:$('#f_note').value.trim()};
+    const n={...v,name,cat:$('#f_cat').value,area:$('#f_area').value,phone:$('#f_phone').value.trim(),rate:+String($('#f_rate').value).replace(/[^\d.]/g,'')||0,note:$('#f_note').value.trim(),memo:$('#f_memo').value.trim()};
     if(i==null)D.unshift(n);else D[i]=n;save();$('#modal').classList.remove('on');render()};
+}
+function copyTxt(t,btn){
+  const done=()=>{if(btn){const o=btn.textContent;btn.textContent='คัดลอกแล้ว';setTimeout(()=>btn.textContent=o,1200)}};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(t).then(done,()=>fb());else fb();
+  function fb(){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(e){}a.remove();done()}
+}
+function openJob(i){
+  const v=D[i];
+  $('#mbox').innerHTML='<h3>ส่งงานให้ '+esc(v.name)+'</h3>'
+   +'<label>งาน/อาการที่ต้องแก้<input id="j_t" placeholder="เช่น แอร์ไม่เย็น ห้องนอนใหญ่"></label>'
+   +'<label>ลูกค้า / สถานที่<input id="j_p" placeholder="เช่น วิลล่า A เชิงทะเล"></label>'
+   +'<label>วันที่/เวลานัด<input id="j_d" placeholder="เช่น พรุ่งนี้ 10:00"></label>'
+   +'<label>ข้อความที่จะส่ง<textarea id="j_m" rows="7"></textarea></label>'
+   +'<div class="mact"><button class="mb" id="j_x">ปิด</button><button class="mb" id="j_c">คัดลอกข้อความ</button><button class="mb pri" id="j_l">เปิด LINE</button></div>';
+  const mk=()=>{const t=$('#j_t').value.trim(),p=$('#j_p').value.trim(),d=$('#j_d').value.trim();
+    $('#j_m').value='สวัสดีครับ/ค่ะ '+v.name+'\nมีงานให้รบกวนดูแลครับ\n'+(t?'งาน: '+t+'\n':'')+(p?'สถานที่: '+p+'\n':'')+(d?'นัดหมาย: '+d+'\n':'')+'รบกวนแจ้งราคาและคิวว่างด้วยครับ ขอบคุณครับ'};
+  ['j_t','j_p','j_d'].forEach(k=>$('#'+k).addEventListener('input',mk));mk();
+  $('#j_x').onclick=()=>$('#modal').classList.remove('on');
+  $('#j_c').onclick=e=>copyTxt($('#j_m').value,e.target);
+  $('#j_l').onclick=()=>window.open('https://line.me/R/share?text='+encodeURIComponent($('#j_m').value),'_blank');
+  $('#modal').classList.add('on');$('#j_t').focus();
 }
 $('#add').onclick=()=>openForm(null);
 $('#reset').onclick=()=>{if(confirm('ล้างการแก้ไขทั้งหมดในเครื่องนี้ และกลับไปใช้รายชื่อต้นฉบับ?')){D=BASE.slice();save();render()}};
 $('#xl').onclick=()=>{
-  const go=()=>{const rows=[['ชื่อ','ประเภทงาน','พื้นที่','เบอร์โทร','ราคาเริ่มต้น','หมายเหตุ']].concat(D.map(v=>[v.name,v.cat,v.area,v.phone,v.rate||'',v.note]));
+  const go=()=>{const rows=[['ชื่อ','ประเภทงาน','พื้นที่','เบอร์โทร','ราคาเริ่มต้น','หมายเหตุ','บันทึกภายใน']].concat(D.map(v=>[v.name,v.cat,v.area,v.phone,v.rate||'',v.note,v.memo||'']));
     const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:30},{wch:20},{wch:18},{wch:18},{wch:12},{wch:50}];
     const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'รายชื่อ');XLSX.writeFile(wb,'after-service-phuket-vendors.xlsx')};
   if(window.XLSX)return go();
